@@ -385,6 +385,10 @@ static void pxa2xx_dma_write(void *opaque, hwaddr offset,
         pxa2xx_dma_update(s, channel);
         break;
 
+    case DINT:
+       /* Ignore it. Writable for PXA255. */
+       break;
+
     case DALGN:
         s->align = value;
         break;
