@@ -742,6 +742,17 @@ static const ARMCPRegInfo not_v6_cp_reginfo[] = {
     REGINFO_SENTINEL
 };
 
+static const ARMCPRegInfo not_v7_not_pxa255_cp_reginfo[] = {
+    /* We don't implement pre-v7 debug but most CPUs had at least a DBGDIDR;
+     * implementing it as RAZ means the "debug architecture version" bits
+     * will read as a reserved value, which should cause Linux to not try
+     * to use the debug hardware.
+     */
+    { .name = "DBGDIDR", .cp = 14, .crn = 0, .crm = 0, .opc1 = 0, .opc2 = 0,
+      .access = PL0_R, .type = ARM_CP_CONST, .resetvalue = 0 },
+    REGINFO_SENTINEL
+};
+
 static const ARMCPRegInfo not_v7_cp_reginfo[] = {
     /* Standard v6 WFI (also used in some pre-v6 cores); not in v7 (which
      * is UNPREDICTABLE; we choose to NOP as most implementations do).
@@ -762,13 +773,6 @@ static const ARMCPRegInfo not_v7_cp_reginfo[] = {
     { .name = "DUMMY", .cp = 15, .crn = 0, .crm = 0, .opc1 = 1, .opc2 = CP_ANY,
       .access = PL1_R, .type = ARM_CP_CONST | ARM_CP_NO_RAW,
       .resetvalue = 0 },
-    /* We don't implement pre-v7 debug but most CPUs had at least a DBGDIDR;
-     * implementing it as RAZ means the "debug architecture version" bits
-     * will read as a reserved value, which should cause Linux to not try
-     * to use the debug hardware.
-     */
-    { .name = "DBGDIDR", .cp = 14, .crn = 0, .crm = 0, .opc1 = 0, .opc2 = 0,
-      .access = PL0_R, .type = ARM_CP_CONST, .resetvalue = 0 },
     /* MMU TLB control. Note that the wildcarding means we cover not just
      * the unified TLB ops but also the dside/iside/inner-shareable variants.
      */
@@ -4546,7 +4550,12 @@ void register_cp_regs_for_features(ARMCPU *cpu)
         define_arm_cp_regs(cpu, v7_cp_reginfo);
         define_debug_regs(cpu);
     } else {
-        define_arm_cp_regs(cpu, not_v7_cp_reginfo);
+        if (arm_feature(env, ARM_FEATURE_IWMMXT)) {
+            define_arm_cp_regs(cpu, not_v7_cp_reginfo);
+            define_arm_cp_regs(cpu, not_v7_not_pxa255_cp_reginfo);
+        } else {
+            define_arm_cp_regs(cpu, not_v7_cp_reginfo);
+        }
     }
     if (arm_feature(env, ARM_FEATURE_V8)) {
         /* AArch64 ID registers, which all have impdef reset values.
