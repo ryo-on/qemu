@@ -336,7 +336,32 @@ static uint64_t pxa2xx_cpccnt_read(CPUARMState *env, const ARMCPRegInfo *ri)
     }
 }
 
-static const ARMCPRegInfo pxa_cp_reginfo[] = {
+static const ARMCPRegInfo pxa255_cp14_reginfo[] = {
+    /* perf register */
+    { .name = "CPPMNC", .cp = 14, .crn = 0, .crm = 0, .opc1 = 0, .opc2 = 0,
+      .access = PL1_RW,
+      .readfn = pxa2xx_cppmnc_read, .writefn = pxa2xx_cppmnc_write },
+    /* clock counter register */
+    { .name = "CPCCNT", .cp = 14, .crn = 1, .crm = 0, .opc1 = 0, .opc2 = 0,
+      .access = PL1_RW,
+      .readfn = pxa2xx_cpccnt_read, .writefn = arm_cp_write_ignore },
+    /* performance count registers */
+    { .name = "CPPMN0", .cp = 14, .crn = 2, .crm = 0, .opc1 = 0, .opc2 = 0,
+      .access = PL1_RW, .type = ARM_CP_CONST, .resetvalue = 0 },
+    { .name = "CPPMN1", .cp = 14, .crn = 3, .crm = 0, .opc1 = 0, .opc2 = 0,
+      .access = PL1_RW, .type = ARM_CP_CONST, .resetvalue = 0 },
+    /* cp14 crn==6: CLKCFG */
+    { .name = "CLKCFG", .cp = 14, .crn = 6, .crm = 0, .opc1 = 0, .opc2 = 0,
+      .access = PL1_RW,
+      .readfn = pxa2xx_clkcfg_read, .writefn = pxa2xx_clkcfg_write },
+    /* cp14 crn==7: PWRMODE */
+    { .name = "PWRMODE", .cp = 14, .crn = 7, .crm = 0, .opc1 = 0, .opc2 = 0,
+      .access = PL1_RW,
+      .readfn = arm_cp_read_zero, .writefn = pxa2xx_pwrmode_write },
+    REGINFO_SENTINEL
+};
+
+static const ARMCPRegInfo pxa270_cp14_reginfo[] = {
     /* cp14 crm==1: perf registers */
     { .name = "CPPMNC", .cp = 14, .crn = 0, .crm = 1, .opc1 = 0, .opc2 = 0,
       .access = PL1_RW, .type = ARM_CP_IO,
@@ -370,9 +395,14 @@ static const ARMCPRegInfo pxa_cp_reginfo[] = {
     REGINFO_SENTINEL
 };
 
-static void pxa2xx_setup_cp14(PXA2xxState *s)
+static void pxa255_setup_cp14(PXA2xxState *s)
 {
-    define_arm_cp_regs_with_opaque(s->cpu, pxa_cp_reginfo, s);
+    define_arm_cp_regs_with_opaque(s->cpu, pxa255_cp14_reginfo, s);
+}
+
+static void pxa270_setup_cp14(PXA2xxState *s)
+{
+    define_arm_cp_regs_with_opaque(s->cpu, pxa270_cp14_reginfo, s);
 }
 
 #define MDCNFG		0x00	/* SDRAM Configuration register */
@@ -2137,7 +2167,7 @@ PXA2xxState *pxa270_init(MemoryRegion *address_space,
     memory_region_add_subregion(address_space, s->cm_base, &s->cm_iomem);
     vmstate_register(NULL, 0, &vmstate_pxa2xx_cm, s);
 
-    pxa2xx_setup_cp14(s);
+    pxa270_setup_cp14(s);
 
     s->mm_base = 0x48000000;
     s->mm_regs[MDMRS >> 2] = 0x00020002;
@@ -2270,7 +2300,7 @@ PXA2xxState *pxa255_init(MemoryRegion *address_space, unsigned int sdram_size)
     memory_region_add_subregion(address_space, s->cm_base, &s->cm_iomem);
     vmstate_register(NULL, 0, &vmstate_pxa2xx_cm, s);
 
-    pxa2xx_setup_cp14(s);
+    pxa255_setup_cp14(s);
 
     s->mm_base = 0x48000000;
     s->mm_regs[MDMRS >> 2] = 0x00020002;
