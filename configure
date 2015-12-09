@@ -4055,8 +4055,12 @@ fi
 cat > $TMPC <<EOF
 #include <signal.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 int main(void) {
   timer_create(CLOCK_REALTIME, NULL, NULL);
+  shm_open(NULL, O_RDWR, 0644);
   return clock_gettime(CLOCK_REALTIME, NULL);
 }
 EOF
